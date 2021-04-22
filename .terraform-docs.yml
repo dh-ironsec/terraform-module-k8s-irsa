@@ -1,0 +1,23 @@
+formatter: markdown document
+header-from: header.md
+sections:
+  hide-all: false
+  show-all: true
+
+output-values:
+  enabled: false
+
+sort:
+  enabled: true
+  by:
+    - type
+
+settings:
+  anchors: true
+  color: true
+  default: true
+  escape: true
+  indent: 2
+  required: true
+  sensitive: true
+  type: true
