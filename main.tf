@@ -1,26 +1,45 @@
-resource "aws_iam_role" "this" {
-
-  name = var.role_name
-
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Federated": "arn:aws:iam::${var.account_id}:oidc-provider/${var.oidc_url}"
-      },
-      "Action": "sts:AssumeRoleWithWebIdentity",
-      "Condition": {
-        "StringEquals": {
-          "${var.oidc_url}:sub": "system:serviceaccount:${var.service_account_namespace}:${var.service_account_name}"
-        }
-      }
-    }
-  ]
+data "aws_vpc" "selected" {
+  id = var.aws_vpc_id
 }
-EOF
+
+data "aws_region" "current" {
+  name = var.aws_region
+}
+
+data "aws_caller_identity" "current" {}
+
+# The EKS cluster (if any) that represents the installation target.
+data "aws_eks_cluster" "selected" {
+  name  = var.cluster_name
+}
+
+data "aws_iam_policy_document" "eks_oidc_assume_role" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    effect  = "Allow"
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(data.aws_eks_cluster.selected[0].identity[0].oidc[0].issuer, "https://", "")}:sub"
+      values = [
+        "system:serviceaccount:${var.service_account_namespace}:${var.service_account_name}"
+      ]
+    }
+    principals {
+      identifiers = [
+        "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${replace(data.aws_eks_cluster.selected[0].identity[0].oidc[0].issuer, "https://", "")}"
+      ]
+      type = "Federated"
+    }
+  }
+}
+
+resource "aws_iam_role" "this" {
+  name        = "${var.cluster_name}-${var.service_account_name}-role"
+  description = "Permissions required by the Kubernetes ${var.service_account_name} service account to do it's job."
+  tags = var.aws_tags
+  force_detach_policies = true
+
+  assume_role_policy = data.aws_iam_policy_document.eks_oidc_assume_role[0].json
 }
 
 resource "aws_iam_policy" "this" {
@@ -28,7 +47,14 @@ resource "aws_iam_policy" "this" {
   policy = var.iam_policy
 }
 
+resource "aws_iam_role_policy_attachment" "this" {
+  policy_arn = aws_iam_policy.this.arn
+  role       = aws_iam_role.this.name
+}
+
+
 resource "kubernetes_service_account" "this" {
+  count = var.create_k8s_sa ? 1 :0
   metadata {
     name = var.service_account_name
     namespace = var.service_account_namespace
