@@ -8,16 +8,6 @@ variable "policy_name" {
   type = string
 }
 
-variable "account_id" {
-  description = "AWSAccount ID"
-  type = string
-}
-
-variable "oidc_url" {
-  description = "OIDC URL for cluster"
-  type = string
-}
-
 variable "service_account_name" {
   description = "K8s Service account name"
   type = string
