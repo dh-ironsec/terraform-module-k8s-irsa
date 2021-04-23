@@ -1,5 +1,5 @@
 output "service_account" {
-  value = kubernetes_service_account.this.metadata.name
+  value = var.create_k8s_sa ? kubernetes_service_account.this.0.metadata.0.name : null
   description = "Created service account name"
 }
 

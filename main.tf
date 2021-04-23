@@ -19,14 +19,14 @@ data "aws_iam_policy_document" "eks_oidc_assume_role" {
     effect  = "Allow"
     condition {
       test     = "StringEquals"
-      variable = "${replace(data.aws_eks_cluster.selected.identity.oidc.issuer, "https://", "")}:sub"
+      variable = "${replace(data.aws_eks_cluster.selected.identity[0].oidc[0].issuer, "https://", "")}:sub"
       values = [
         "system:serviceaccount:${var.service_account_namespace}:${var.service_account_name}"
       ]
     }
     principals {
       identifiers = [
-        "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${replace(data.aws_eks_cluster.selected.identity.oidc.issuer, "https://", "")}"
+        "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${replace(data.aws_eks_cluster.selected.identity[0].oidc[0].issuer, "https://", "")}"
       ]
       type = "Federated"
     }
