@@ -25,14 +25,14 @@ data "aws_iam_policy_document" "eks_oidc_assume_role" {
     effect  = "Allow"
     condition {
       test     = "StringEquals"
-      variable = "${replace(data.aws_eks_cluster.selected.identity[0].oidc[0].issuer, "https://", "")}:sub"
+      variable = "${replace(data.aws_eks_cluster.selected.0.identity[0].oidc[0].issuer, "https://", "")}:sub"
       values = [
         "system:serviceaccount:${var.service_account_namespace}:${var.service_account_name}"
       ]
     }
     principals {
       identifiers = [
-        "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${replace(data.aws_eks_cluster.selected.identity[0].oidc[0].issuer, "https://", "")}"
+        "arn:aws:iam::${data.aws_caller_identity.current.0.account_id}:oidc-provider/${replace(data.aws_eks_cluster.selected.0.identity[0].oidc[0].issuer, "https://", "")}"
       ]
       type = "Federated"
     }
@@ -46,7 +46,7 @@ resource "aws_iam_role" "this" {
   tags = var.aws_tags
   force_detach_policies = true
 
-  assume_role_policy = data.aws_iam_policy_document.eks_oidc_assume_role.json
+  assume_role_policy = data.aws_iam_policy_document.eks_oidc_assume_role.0.json
 }
 
 
@@ -58,8 +58,8 @@ resource "aws_iam_policy" "this" {
 
 resource "aws_iam_role_policy_attachment" "this" {
   count = var.enabled ? 1 : 0
-  policy_arn = aws_iam_policy.this.arn
-  role       = aws_iam_role.this.name
+  policy_arn = aws_iam_policy.this.0.arn
+  role       = aws_iam_role.this.0.name
 }
 
 
@@ -69,7 +69,8 @@ resource "kubernetes_service_account" "this" {
     name = var.service_account_name
     namespace = var.service_account_namespace
     annotations = {
-      "eks.amazonaws.com/role-arn" = aws_iam_role.this.arn
+      "eks.amazonaws.com/role-arn" = aws_iam_role.this.0.arn
     }
   }
+  automount_service_account_token = true
 }

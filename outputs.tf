@@ -4,11 +4,11 @@ output "service_account" {
 }
 
 output "iam_policy_arn" {
-  value = aws_iam_policy.this.arn
+  value = var.enabled ? aws_iam_policy.this.0.arn : null
   description = "IAM Policy ARN for created policy"
 }
 
 output "iam_role_arn" {
-  value = aws_iam_role.this.arn
+  value = var.enabled ? aws_iam_role.this.0.arn : null
   description = "IAM Role ARN for created role"
 }
