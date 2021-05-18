@@ -1,3 +1,8 @@
+variable "enabled" {
+  default = true
+  description = "Enable creation of module resources"
+  type = bool
+}
 variable "role_name" {
   description = "AWS IAM Role Name"
   type = string
